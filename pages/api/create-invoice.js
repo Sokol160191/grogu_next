@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         type: 'SINGLE',
@@ -32,8 +32,8 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('GoodPayments error:', data);
-      return res.status(response.status).json({ error: 'Payment provider error', details: data });
+      console.error('GoodPayments error:', response.status, data);
+      return res.status(response.status).json({ error: JSON.stringify(data) });
     }
 
     return res.status(201).json({ paymentURL: data.paymentURL });
