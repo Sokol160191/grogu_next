@@ -1,7 +1,52 @@
 import Head from 'next/head';
 import Script from 'next/script';
+import { useEffect } from 'react';
 
 export default function Home() {
+  useEffect(() => {
+    const btn = document.querySelector('.presale__connect-row');
+    const usdtInput = document.querySelector('.presale__input-box input');
+    if (!btn || !usdtInput) return;
+
+    async function handleBuy(e) {
+      e.preventDefault();
+      const amount = parseFloat(usdtInput.value);
+      if (!amount || amount < 0.01) {
+        alert('Please enter a valid USDT amount (minimum 0.01)');
+        return;
+      }
+
+      const label = btn.querySelector('.pill-btn__label');
+      const originalText = label.textContent;
+      btn.style.pointerEvents = 'none';
+      btn.style.opacity = '0.7';
+      label.textContent = 'Creating invoice…';
+
+      try {
+        const res = await fetch('/api/create-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error');
+        if (data.paymentURL) {
+          window.location.href = data.paymentURL;
+        } else {
+          throw new Error('No payment URL received');
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+        btn.style.pointerEvents = '';
+        btn.style.opacity = '';
+        label.textContent = originalText;
+      }
+    }
+
+    btn.addEventListener('click', handleBuy);
+    return () => btn.removeEventListener('click', handleBuy);
+  }, []);
+
   return (
     <>
       <Head>
